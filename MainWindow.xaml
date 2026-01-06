@@ -1,0 +1,255 @@
+﻿<mah:MetroWindow x:Class="MVP_Voltage.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MVP_Voltage"
+        xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:bhv="clr-namespace:MVP_Voltage.Behavior"
+        xmlns:thm="clr-namespace:MVP_Voltage.Themes"
+                 xmlns:cvt="clr-namespace:MVP_Voltage.Converter"
+                 xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        mc:Ignorable="d"
+        Title="Makinarocks" Height="450" Width="800">
+    <mah:MetroWindow.DataContext>
+        <local:MainWindowViewModel />
+    </mah:MetroWindow.DataContext>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="5*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Video File:" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding VideoPath}" VerticalAlignment="Center" IsReadOnly="True" />
+                <Button Grid.Column="2" Content="Open" Command="{Binding CommandOpenVideoPath}" VerticalAlignment="Center" />
+            </Grid>
+            <GroupBox x:Name="grb_voltsetting" Header="VoltSetting" IsEnabled="{Binding IsInspection, Converter={cvt:BoolInvertConverter}}">
+                <StackPanel Orientation="Vertical">
+                    <mah:NumericUpDown mah:TextBoxHelper.Watermark="Start Volt" Value="{Binding StartVolt}"
+                                      mah:TextBoxHelper.UseFloatingWatermark="True" />
+                    <mah:NumericUpDown mah:TextBoxHelper.Watermark="Volt Step" Value="{Binding VoltStep}"
+                  mah:TextBoxHelper.UseFloatingWatermark="True" />
+                    <mah:NumericUpDown mah:TextBoxHelper.Watermark="Update Time Interval(ms)" Value="{Binding UpdateIntervalMs}"
+mah:TextBoxHelper.UseFloatingWatermark="True" />
+                    <mah:NumericUpDown mah:TextBoxHelper.Watermark="Max Spec-in Volt" Value="{Binding SpecInMaxVolt}"
+mah:TextBoxHelper.UseFloatingWatermark="True" />
+                    <mah:NumericUpDown mah:TextBoxHelper.Watermark="Min Spec-in Volt" Value="{Binding SpecInMinVolt}"
+mah:TextBoxHelper.UseFloatingWatermark="True" />
+                    <mah:ToggleSwitch Content="IsSaveSpecOut" IsOn="{Binding IsSaveSpecOut}" />
+
+
+                    <TextBlock  HorizontalAlignment="Center" FontSize="25" >
+                        <Run Text="Current Volt : " />
+                        <Run Text="{Binding CurrentVolt, StringFormat=F2}" />
+                    </TextBlock>
+                    <lvc:CartesianChart Width="{Binding ActualWidth, ElementName=grb_voltsetting}" Height="300"
+                                        XAxes="{Binding EpochsAxis}" YAxes="{Binding YAxes}"
+                                        Series="{Binding VoltageGraph}"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+
+
+        <TabControl Grid.Column="1" >
+            <TabItem Header="Master Setting">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+                    <GroupBox Grid.Column="0">
+                        <StackPanel Orientation="Vertical">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="0" />
+                                <TextBlock Grid.Column="1" Text="{Binding MaxFrame}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Slider Minimum="0" Value="{Binding SelectedFrame, StringFormat=D0}" Maximum="{Binding MaxFrame}" />
+                            <mah:NumericUpDown mah:TextBoxHelper.Watermark="Frame" mah:TextBoxHelper.UseFloatingWatermark="True" Minimum="0" Value="{Binding SelectedFrame}" Maximum="{Binding MaxFrame}"  >
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="ValueChanged">
+                                        <i:InvokeCommandAction Command="{Binding CommandSelectedFrameChanged}" />
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </mah:NumericUpDown>
+                            <GroupBox Header="Master ROI">
+                                <StackPanel Orientation="Vertical">
+                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.X}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI X" />
+                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Y}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Y" />
+                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Width}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Width" />
+                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Height}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Height" />
+
+                                    
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+                        <Canvas x:Name="settingCanvas" Background="{Binding ImageControl.ImageBrush}" Width="{Binding ImageControl.Image.Source.Width}" Height="{Binding ImageControl.Image.Source.Height}">
+                            <Canvas.LayoutTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="{Binding ImageControl.ImageScaleX}" ScaleY="{Binding ImageControl.ImageScaleX}" ></ScaleTransform>
+                                </TransformGroup>
+                            </Canvas.LayoutTransform>
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Loaded">
+                                    <i:InvokeCommandAction Command="{Binding Path=CommandLoaded}" PassEventArgsToCommand="True" />
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="PreviewMouseMove">
+                                    <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseMove}" PassEventArgsToCommand="True"/>
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="PreviewMouseDown">
+                                    <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseDown}" PassEventArgsToCommand="True"/>
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="PreviewMouseUp">
+                                    <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseUp}" PassEventArgsToCommand="True"/>
+                                </i:EventTrigger>
+                                <i:EventTrigger EventName="MouseWheel">
+                                    <i:InvokeCommandAction Command="{Binding Path=CanvasEventMouseWheel}" PassEventArgsToCommand="True"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <Image Source="{Binding ImageControl.Image.Source}" Panel.ZIndex="9"/>
+                            <thm:ROISelectorControl Roi="{Binding Settings.MasterROI}" BoundsW="{Binding ActualWidth, ElementName=settingCanvas}" 
+                                                    BoundsH="{Binding ActualHeight, ElementName=settingCanvas}"
+                                                    HandleSize="12"
+                                                    DimOpacity="0.5"
+                                                    Panel.ZIndex="11" />
+                        </Canvas>
+                    </ScrollViewer>
+                    
+                </Grid>
+            </TabItem>
+            <TabItem Header="Inspection">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
+
+                        
+
+                        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+                            <Canvas  Background="{Binding InspectionImageControl.ImageBrush}" Width="{Binding InspectionImageControl.Image.Source.Width}" Height="{Binding InspectionImageControl.Image.Source.Height}">
+                                <Canvas.LayoutTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="{Binding InspectionImageControl.ImageScaleX}" ScaleY="{Binding InspectionImageControl.ImageScaleX}" ></ScaleTransform>
+                                    </TransformGroup>
+                                </Canvas.LayoutTransform>
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="Loaded">
+                                        <i:InvokeCommandAction Command="{Binding Path=CommandLoaded}" PassEventArgsToCommand="True" />
+                                    </i:EventTrigger>
+                                    <i:EventTrigger EventName="PreviewMouseMove">
+                                        <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseMove}" PassEventArgsToCommand="True"/>
+                                    </i:EventTrigger>
+                                    <i:EventTrigger EventName="PreviewMouseDown">
+                                        <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseDown}" PassEventArgsToCommand="True"/>
+                                    </i:EventTrigger>
+                                    <i:EventTrigger EventName="PreviewMouseUp">
+                                        <i:InvokeCommandAction Command="{Binding Path=CanvasEventPreviewMouseUp}" PassEventArgsToCommand="True"/>
+                                    </i:EventTrigger>
+                                    <i:EventTrigger EventName="MouseWheel">
+                                        <i:InvokeCommandAction Command="{Binding Path=CanvasEventMouseWheel}" PassEventArgsToCommand="True"/>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                                <Image Source="{Binding InspectionImageControl.Image.Source}"/>
+                                <Rectangle Stroke="Red" StrokeThickness="1" Width="{Binding ROIWidth}" Height="{Binding ROIHeight}" >
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform X="{Binding ROIX}" Y="{Binding ROIY}" />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </Canvas>
+                        </ScrollViewer>
+
+                        <Grid Grid.Row="1">
+                            <TextBlock Panel.ZIndex="10" HorizontalAlignment="Center" >
+                                <Run Text="(" />
+                                <Run Text="{Binding ProgressValue}" />
+                                <Run Text=" / " />
+                                <Run Text="{Binding ProgressMax}" />
+                                <Run Text=")" />
+                            </TextBlock>
+                            <ProgressBar Value="{Binding ProgressValue}" Maximum="{Binding ProgressMax}" />
+                        </Grid>
+                        <Grid Grid.Row="2" IsEnabled="{Binding IsOpenVideo}" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Play" Command="{Binding CommandInspect}" IsEnabled="{Binding IsInspection, Converter={cvt:BoolInvertConverter}}" />
+                            <Button Grid.Column="1" Content="Stop" Command="{Binding CommandStop}" IsEnabled="{Binding IsInspection}" />
+                        </Grid>
+                        
+                    </Grid>
+
+                    <GroupBox Grid.Column="1" >
+                        <ListBox ItemsSource="{Binding DetectedFrameItem}" >
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Image Grid.Column="0" Source="{Binding Thumbnail}" />
+                                        <UniformGrid Columns="2" Grid.Column="1">
+                                            <TextBlock Text="Frame Index : " />
+                                            <TextBlock Text="{Binding Index}" />
+
+                                            <TextBlock Text="Voltage : " />
+                                            <TextBlock Text="{Binding Voltage, StringFormat=F2}" />
+
+                                            <TextBlock Text="Result : " />
+                                            <TextBlock Text="{Binding Result}" >
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <!-- 기본 색상 -->
+                                                        <Setter Property="Foreground" Value="Black"/>
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Result}" Value="OK">
+                                                                <Setter Property="Foreground" Value="Blue"/>
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding Result}" Value="NG">
+                                                                <Setter Property="Foreground" Value="Red"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+
+                                        </UniformGrid>
+                                            
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </GroupBox>
+                    
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</mah:MetroWindow>

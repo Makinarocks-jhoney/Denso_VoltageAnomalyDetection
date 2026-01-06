@@ -1,0 +1,153 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:cvt="clr-namespace:MVP_Voltage.Converter"
+                    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                    xmlns:bhv="clr-namespace:MVP_Voltage.Behavior"
+                    xmlns:thm="clr-namespace:MVP_Voltage.Themes">
+    <Style x:Key="TransparentThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <!-- 이 Border가 Thumb의 HitTest 영역(=잡히는 영역) -->
+                    <Border Background="{TemplateBinding Background}"
+BorderThickness="0"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="HandleThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="Panel.ZIndex" Value="11" />
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border Background="{TemplateBinding Background}"
+                                BorderBrush="Black"
+                                BorderThickness="1"
+                                CornerRadius="2"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="{x:Type thm:ROISelectorControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type thm:ROISelectorControl}">
+                    <!-- ROI 컨트롤은 “오버레이 전용”이므로 배경 없음 -->
+                    <Canvas Width="{TemplateBinding BoundsW}"
+                            Height="{TemplateBinding BoundsH}"
+                            Background="Transparent">
+
+                        <!-- ===== Dim 4장 ===== -->
+                        <!-- Top -->
+                        <Rectangle Fill="Black"
+                                   Opacity="{TemplateBinding DimOpacity}"
+                                   Canvas.Left="0" Canvas.Top="0"
+                                   Width="{TemplateBinding BoundsW}"
+                                   Height="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- Bottom -->
+                        <Rectangle Fill="Black"
+                                   Opacity="{TemplateBinding DimOpacity}"
+                                   Canvas.Left="0"
+                                   Canvas.Top="{Binding Roi.Bottom, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Width="{TemplateBinding BoundsW}"
+                                   Height="{Binding DimBottomH, RelativeSource={RelativeSource TemplatedParent}}"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- Left -->
+                        <Rectangle Fill="Black"
+                                   Opacity="{TemplateBinding DimOpacity}"
+                                   Canvas.Left="0"
+                                   Canvas.Top="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Width="{Binding Roi.X, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Height="{Binding Roi.Height, RelativeSource={RelativeSource TemplatedParent}}"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- Right -->
+                        <Rectangle Fill="Black"
+                                   Opacity="{TemplateBinding DimOpacity}"
+                                   Canvas.Left="{Binding Roi.Right, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Canvas.Top="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Width="{Binding DimRightW, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Height="{Binding Roi.Height, RelativeSource={RelativeSource TemplatedParent}}"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- ===== ROI 표시 ===== -->
+                        <Rectangle Stroke="Red"
+                                   StrokeThickness="2"
+                                   Fill="#30FF0000"
+                                   Canvas.Left="{Binding Roi.X, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Canvas.Top="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Width="{Binding Roi.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Height="{Binding Roi.Height, RelativeSource={RelativeSource TemplatedParent}}"
+                                   IsHitTestVisible="False"/>
+
+                        <!-- ===== 이동 Thumb ===== -->
+                        <Thumb x:Name="PART_Move"
+                               Style="{StaticResource TransparentThumbStyle}"
+                               Cursor="SizeAll"
+                               Canvas.Left="{Binding Roi.X, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
+                               Width="{Binding Roi.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                               Height="{Binding Roi.Height, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <!-- ===== 8 핸들 (정중앙 보정 완료) ===== -->
+                        <Thumb x:Name="PART_NW" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNWSE"
+                               Canvas.Left="{Binding HandleNWLeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleNWTop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_NE" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNESW"
+                               Canvas.Left="{Binding HandleNELeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleNETop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_SW" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNESW"
+                               Canvas.Left="{Binding HandleSWLeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleSWTop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_SE" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNWSE"
+                               Canvas.Left="{Binding HandleSELeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleSETop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_N" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNS"
+                               Canvas.Left="{Binding HandleNLeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleNTop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_S" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeNS"
+                               Canvas.Left="{Binding HandleSLeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleSTop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_W" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeWE"
+                               Canvas.Left="{Binding HandleWLeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleWTop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                        <Thumb x:Name="PART_E" Style="{StaticResource HandleThumbStyle}"
+                               Width="{TemplateBinding HandleSize}" Height="{TemplateBinding HandleSize}"
+                               Cursor="SizeWE"
+                               Canvas.Left="{Binding HandleELeft, RelativeSource={RelativeSource TemplatedParent}}"
+                               Canvas.Top="{Binding HandleETop, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                    </Canvas>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
