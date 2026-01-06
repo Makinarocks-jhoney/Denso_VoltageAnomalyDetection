@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
+using MahApps.Metro.Controls.Dialogs;
 using MVP_Voltage.Model;
 using MVP_Voltage.Services;
 using MVP_Voltage.Util;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +31,7 @@ namespace MVP_Voltage
     {
 
         #region 프로퍼티
+        public IDialogCoordinator _dialogCoordinator;
         public Settings Settings { get; } = new Settings();
         public CamInformation CamInformation { get; } = new CamInformation();
         public Detection Detection { get; } = new Detection();
@@ -64,7 +67,14 @@ namespace MVP_Voltage
             get { return CamInformation.TotalFrame; }
             set { CamInformation.TotalFrame = value; OnPropertyChanged("MaxFrame"); }
         }
-        
+
+        public double Brightness
+        {
+            get { return _brightness; }
+            set { _brightness = value; OnPropertyChanged("Brightness"); }
+        }
+        private double _brightness = 0;
+
         public int SelectedFrame
         {
             get { return _selectedFrame; }
@@ -230,8 +240,10 @@ namespace MVP_Voltage
         public RelayCommand<object> CommandInspect { get; private set; }
         public RelayCommand<object> CommandStop { get; private set; }
 
+        public RelayCommand<object> CommandCalcBrightness { get; private set; }
+        
         public RelayCommand<RoiDragArgs> RoiDragCommand { get; private set; }
-        public RelayCommand<DragDeltaEventArgs> CommandResizeROI { get; private set; }
+        
         
         #endregion
 
@@ -241,7 +253,12 @@ namespace MVP_Voltage
             InitData();
             InitCommand();
             InitEvent();
-
+            _dialogCoordinator = DialogCoordinator.Instance;
+            if (File.Exists("settings.json"))
+            {
+                SaveLoadJson.LoadData<Settings>("settings.json", Settings);
+            }
+                
             VoltageGraph = new ObservableCollection<ISeries>
             {
                 VoltageSeries
@@ -260,8 +277,10 @@ namespace MVP_Voltage
             CommandInspect = new RelayCommand<object>((e) => OnCommandInspect(e));
             CommandStop = new RelayCommand<object>((e) => OnCommandStop(e));
 
+            CommandCalcBrightness = new RelayCommand<object>((e) => OnCommandCalcBrightness(e));
+
             RoiDragCommand = new RelayCommand<RoiDragArgs>((e) => OnRoiDragCommand(e));
-            CommandResizeROI = new RelayCommand<DragDeltaEventArgs>((e) => OnCommandResizeROI(e));
+            
         }
 
         
@@ -347,6 +366,19 @@ namespace MVP_Voltage
             }
         }
 
+        private void OnCommandCalcBrightness(object? e)
+        {
+            var roiRect = new OpenCvSharp.Rect(Settings.MasterROI.X, Settings.MasterROI.Y, Settings.MasterROI.Width, Settings.MasterROI.Height);
+            Mat target = CamInformation.GetFrameImage(SelectedFrame);
+            Cv2.CvtColor(target, target, ColorConversionCodes.BGR2GRAY);
+            using (var roi = new Mat(target, roiRect))
+            {
+                var mean = Cv2.Mean(roi);
+                Brightness = mean.Val0;
+            }
+            target.Dispose();
+        }
+
         private async Task OnRoiDragCommand(RoiDragArgs? e)
         {
             if(ImageControl.Image.Source==null)
@@ -426,14 +458,7 @@ namespace MVP_Voltage
             { Settings.MasterROI.Y = (int)Math.Round(ImageControl.Image.Source.Height, MidpointRounding.ToZero) - Settings.MasterROI.Height; }
 
         }
-        private void OnCommandResizeROI(DragDeltaEventArgs? e)
-        {
-            if (ImageControl.Image.Source == null)
-            {
-                return;
-            }
-
-        }
+        
         private async Task PlayAndAnalyzeRealtimeAsync(CancellationToken ct)
         {            
             double frameIntervalMs = 1000.0 / CamInformation.FPS;
@@ -464,7 +489,7 @@ namespace MVP_Voltage
                     frame = CamInformation.GetFrameImage(index);
                     double elapsedMs = playWatch.Elapsed.TotalMilliseconds;
                     int idealIndex = (int)(elapsedMs / frameIntervalMs);
-                    frame.SaveImage("frame/" + index.ToString("D4") +  @".png");
+                    
                     //if (idealIndex > index)
                     //{
                     //    skipCount++;
@@ -483,12 +508,6 @@ namespace MVP_Voltage
                     InspectionImageControl.ImageSourceUpdate(frame, "Image");
 
 
-                    //await Dispatcher.InvokeAsync(() =>
-                    //{
-                    //    txt_timestamp.Text = string.Format("{0:00}:{1:00}:{2:00}.{3:00}", _stopwatch.Elapsed.Hours, _stopwatch.Elapsed.Minutes, _stopwatch.Elapsed.Seconds, _stopwatch.Elapsed.Milliseconds / 10);
-                    //    prs_frame.Value = framecount; 
-                    //});
-
                     // 2) ROI 계산 (detectionOnnx 사용)
                     var detected = Detection.Run(frame, false, true);
                     if (detected == null || !detected.Any())
@@ -499,7 +518,7 @@ namespace MVP_Voltage
                     }
 
                     Cv2.CvtColor(frame, gray, ColorConversionCodes.BGR2GRAY);
-
+                    
                     int w = gray.Cols;
                     int h = gray.Rows;
                     var d0 = detected.First(); // (x,y,w,h) 라고 가정
@@ -522,8 +541,12 @@ namespace MVP_Voltage
                     }
 
                     var roiRect = new OpenCvSharp.Rect(roiX, roiY, roiW, roiH);
+                    Mat test = new Mat(frame, roiRect);
+                    test.SaveImage("frame/" + index.ToString("D4") + @".png");
+                    test.Dispose();
                     using (var roi = new Mat(gray, roiRect))
                     {
+                        
                         var mean = Cv2.Mean(roi);
                         double intensity = mean.Val0;
 
@@ -722,6 +745,27 @@ namespace MVP_Voltage
             using var resized = new Mat();
             Cv2.Resize(src, resized, new OpenCvSharp.Size(w, h));
             return BitmapSourceConverter.ToBitmapSource(resized);
+        }
+
+        public async Task<bool> TrySaveAndCloseAsync()
+        {
+            var result = await _dialogCoordinator.ShowMessageAsync(this, "Close", "", MessageDialogStyle.AffirmativeAndNegative);
+            if (result == MessageDialogResult.Affirmative)
+            {
+                //if (SystemSettingViewModel.IsConnectedCam)
+                //{
+                //    await SystemSettingViewModel._camera.CloseAsync();
+                //}
+                await JsonSaveLoadModel.SaveAsync("settings.json", Settings);
+                
+                
+                
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         #endregion
 

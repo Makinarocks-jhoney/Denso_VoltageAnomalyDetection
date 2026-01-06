@@ -11,6 +11,16 @@ namespace MVP_Voltage
     public sealed class Settings:ObservableObject
     {
         public ROIModel MasterROI { get; set; } = new ROIModel();
+
+
+        public double MasterThreshold
+        {
+            get { return _masterThreshold; }
+            set { _masterThreshold = value; OnPropertyChanged("MasterThreshold"); }
+        }
+        private double _masterThreshold = 0.0;
+
+
         public ROIModel OCRROI { get; set; } = new ROIModel();
 
     }

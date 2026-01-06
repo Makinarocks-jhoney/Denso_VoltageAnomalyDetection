@@ -10,6 +10,8 @@
         xmlns:thm="clr-namespace:MVP_Voltage.Themes"
                  xmlns:cvt="clr-namespace:MVP_Voltage.Converter"
                  xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+        Dialog:DialogParticipation.Register="{Binding}"
         mc:Ignorable="d"
         Title="Makinarocks" Height="450" Width="800">
     <mah:MetroWindow.DataContext>
@@ -84,16 +86,28 @@ mah:TextBoxHelper.UseFloatingWatermark="True" />
                                     </i:EventTrigger>
                                 </i:Interaction.Triggers>
                             </mah:NumericUpDown>
-                            <GroupBox Header="Master ROI">
-                                <StackPanel Orientation="Vertical">
-                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.X}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI X" />
-                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Y}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Y" />
-                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Width}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Width" />
-                                    <mah:NumericUpDown Value="{Binding Settings.MasterROI.Height}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Height" />
-
-                                    
-                                </StackPanel>
-                            </GroupBox>
+                            <RadioButton x:Name="rdb_Master">
+                                <GroupBox Header="Master ROI">
+                                    <StackPanel Orientation="Vertical">
+                                        <mah:NumericUpDown Value="{Binding Settings.MasterROI.X}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI X" />
+                                        <mah:NumericUpDown Value="{Binding Settings.MasterROI.Y}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Y" />
+                                        <mah:NumericUpDown Value="{Binding Settings.MasterROI.Width}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Width" />
+                                        <mah:NumericUpDown Value="{Binding Settings.MasterROI.Height}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Master ROI Height" />
+                                        <Button Content="Calc" Command="{Binding CommandCalcBrightness}" />
+                                        <TextBlock Text="{Binding Brightness}" />
+                                    </StackPanel>
+                                </GroupBox>
+                            </RadioButton>
+                            <RadioButton x:Name="rdb_OCR">
+                                <GroupBox Header="OCR ROI">
+                                    <StackPanel Orientation="Vertical">
+                                        <mah:NumericUpDown Value="{Binding Settings.OCRROI.X}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="OCR ROI X" />
+                                        <mah:NumericUpDown Value="{Binding Settings.OCRROI.Y}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="OCR ROI Y" />
+                                        <mah:NumericUpDown Value="{Binding Settings.OCRROI.Width}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="OCR ROI Width" />
+                                        <mah:NumericUpDown Value="{Binding Settings.OCRROI.Height}" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="OCR ROI Height" />
+                                    </StackPanel>
+                                </GroupBox>
+                            </RadioButton>
                         </StackPanel>
                     </GroupBox>
 
@@ -122,11 +136,18 @@ mah:TextBoxHelper.UseFloatingWatermark="True" />
                                 </i:EventTrigger>
                             </i:Interaction.Triggers>
                             <Image Source="{Binding ImageControl.Image.Source}" Panel.ZIndex="9"/>
-                            <thm:ROISelectorControl Roi="{Binding Settings.MasterROI}" BoundsW="{Binding ActualWidth, ElementName=settingCanvas}" 
+                            <thm:ROISelectorControl Visibility="{Binding IsChecked, ElementName=rdb_Master, Converter={cvt:BoolToVisibilityConverter}}"
+                                                    Roi="{Binding Settings.MasterROI}" BoundsW="{Binding ActualWidth, ElementName=settingCanvas}" 
                                                     BoundsH="{Binding ActualHeight, ElementName=settingCanvas}"
                                                     HandleSize="12"
                                                     DimOpacity="0.5"
                                                     Panel.ZIndex="11" />
+                            <thm:ROISelectorControl Visibility="{Binding IsChecked, ElementName=rdb_OCR, Converter={cvt:BoolToVisibilityConverter}}"
+                        Roi="{Binding Settings.OCRROI}" BoundsW="{Binding ActualWidth, ElementName=settingCanvas}" 
+                        BoundsH="{Binding ActualHeight, ElementName=settingCanvas}"
+                        HandleSize="12"
+                        DimOpacity="0.5"
+                        Panel.ZIndex="11" />
                         </Canvas>
                     </ScrollViewer>
                     
