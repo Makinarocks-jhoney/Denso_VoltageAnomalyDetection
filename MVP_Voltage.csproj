@@ -22,8 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ViewModel\" />
-    <Folder Include="View\" />
+    <Reference Include="MvCameraControl.Net">
+      <HintPath>..\..\..\..\Program Files (x86)\MVS\Development\DotNet\win64\net40\MvCameraControl.Net.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

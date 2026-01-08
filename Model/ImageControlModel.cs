@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MvCameraControl;
+using MVP_Voltage.Services;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
@@ -6,8 +8,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +21,58 @@ namespace MVP_Voltage.Model
 {
     internal class ImageControlModel : ObservableObject
     {
+        private WriteableBitmap? _wb;
+        public void UpdateFromRawFrame(RawFrame frame)
+        {
+            var rect = new Int32Rect(0, 0, frame.Width, frame.Height);
+            if(frame.Format== MvCameraControl.MvGvspPixelType.PixelType_Gvsp_BayerRG8)
+            {
+                UpdateFromBayerRG8(frame);
+                return;
+            }
+            
+            _wb!.WritePixels(rect, frame.Buffer, frame.Stride, 0);
+        }
+        public void InitializeSource(int width, int height, int imageChannel)
+        {
+            System.Windows.Media.PixelFormat pf;
+            if (imageChannel == 3)
+            {
+                pf = System.Windows.Media.PixelFormats.Bgr24;
+            }
+            else
+            {
+                pf = System.Windows.Media.PixelFormats.Gray8;
+            }
+
+            if (_wb is not null &&
+                _wb.PixelWidth == width &&
+                _wb.PixelHeight == height &&
+                _wb.Format == pf)
+                return;
+
+            _wb = new WriteableBitmap(width, height, 96, 96, pf, null);
+            Image.Source = _wb; // ✅ UI thread only
+        }
+        
+        private void UpdateFromBayerRG8(RawFrame frame)
+        {
+            // frame.Buffer: w*h, 8UC1
+            //EnsureWriteableBitmap(frame.Width, frame.Height, PixelFormats.Bgr24);
+
+            using var bayer = new Mat(frame.Height, frame.Width, MatType.CV_8UC1);
+            Marshal.Copy(frame.Buffer, 0, bayer.Data, frame.Length);
+
+            using var bgr = new Mat();
+            Cv2.CvtColor(bayer, bgr, ColorConversionCodes.BayerRG2BGR); // ✅ RG8 확정
+            
+            int stride = (int)bgr.Step();               // 보통 width*3
+            int bytes = stride * bgr.Rows;
+
+            // bgr.Data -> WritePixels (byte[] 없이도 IntPtr로 가능)
+            var rect = new Int32Rect(0, 0, bgr.Cols, bgr.Rows);
+            _wb!.WritePixels(rect, bgr.Data, bytes, stride);
+        }
         public ImageControlModel()
         {
             Image.Stretch = Stretch.None;
