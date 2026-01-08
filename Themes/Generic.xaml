@@ -80,7 +80,7 @@ BorderThickness="0"/>
                         <!-- ===== ROI 표시 ===== -->
                         <Rectangle Stroke="Red"
                                    StrokeThickness="2"
-                                   Fill="#30FF0000"
+                                   Fill="Transparent"
                                    Canvas.Left="{Binding Roi.X, RelativeSource={RelativeSource TemplatedParent}}"
                                    Canvas.Top="{Binding Roi.Y, RelativeSource={RelativeSource TemplatedParent}}"
                                    Width="{Binding Roi.Width, RelativeSource={RelativeSource TemplatedParent}}"
